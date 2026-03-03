@@ -1,0 +1,54 @@
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Video files (don't include test videos in image)
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# Images
+*.jpg
+*.png
+*.jpeg
+
+# Model weights (will download automatically)
+*.pt
+*.pth
+
+# Logs
+*.log
+runs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore
+
