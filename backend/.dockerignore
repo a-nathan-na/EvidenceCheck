@@ -1,0 +1,18 @@
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Tests are not part of the runtime image.
+tests/
+
+# The image downloads its own weights during the build.
+*.pt
+*.pth
+
+.env
+*.log

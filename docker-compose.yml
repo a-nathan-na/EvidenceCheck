@@ -1,33 +1,23 @@
-version: '3.8'
-
 services:
-  # Backend Service (FastAPI)
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    build: ./backend
+    container_name: evidencecheck-backend
     ports:
       - "8000:8000"
-    container_name: evidencecheck-backend
-    volumes:
-      # Mount test videos so they are accessible inside container
-      - ./test_videos:/app/test_videos:ro
     environment:
-      - PORT=8000
+      - EVIDENCECHECK_CORS_ORIGINS=http://localhost:3000
     restart: unless-stopped
 
-  # Frontend Service (React + Vite)
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      args:
+        # Vite inlines this at build time, so it is a build arg rather than a
+        # runtime environment variable.
+        VITE_API_URL: http://localhost:8000
+    container_name: evidencecheck-frontend
     ports:
       - "3000:3000"
-    container_name: evidencecheck-frontend
-    # Ensure backend starts before frontend
     depends_on:
       - backend
-    environment:
-      # If your frontend needs to know where the API is
-      - VITE_API_URL=http://localhost:8000
     restart: unless-stopped
