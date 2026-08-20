@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evidencecheck"
+version = "1.0.0"
+description = "Compares written incident reports against what a video actually shows"
+# Upper bound is real: Ultralytics pulls PyTorch, which has no wheels for 3.14 yet.
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "fastapi==0.115.0",
+    "uvicorn[standard]==0.32.1",
+    "python-multipart==0.0.12",
+]
+
+# The detector is a separate extra so the test suite and CI can install a small,
+# fast environment. `app.video` imports OpenCV and Ultralytics lazily, which keeps
+# `import app.main` working without them.
+[project.optional-dependencies]
+vision = [
+    "ultralytics==8.3.230",
+    "opencv-python-headless==4.12.0.88",
+    "numpy>=1.26,<3",
+]
+dev = [
+    "pytest==8.3.4",
+    "httpx==0.28.1",
+    "ruff==0.8.4",
+]
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 90
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+# `File()` and `Form()` in parameter defaults is how FastAPI declares request bodies,
+# so B008 (no function calls in argument defaults) does not apply to them.
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.File", "fastapi.Form", "fastapi.Depends"]
