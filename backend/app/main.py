@@ -29,6 +29,9 @@ from app.scoring import score_consistency
 from app.video import analyze_video, encode_frame_jpeg
 
 ALLOWED_VIDEO_EXTENSIONS = frozenset({".mp4", ".mov", ".avi", ".mkv"})
+# Reports are read as UTF-8 text. PDF and DOCX are containers, not text, and would
+# decode to noise, so they are rejected rather than silently parsed into no claims.
+ALLOWED_REPORT_EXTENSIONS = frozenset({".txt", ".md"})
 SNIPPET_LENGTH = 200
 
 app = FastAPI(
@@ -90,6 +93,13 @@ async def analyze(
 
     report_text = text_description
     if text_file is not None and text_file.filename:
+        report_extension = os.path.splitext(text_file.filename)[1].lower()
+        if report_extension not in ALLOWED_REPORT_EXTENSIONS:
+            allowed = ", ".join(sorted(ALLOWED_REPORT_EXTENSIONS))
+            raise HTTPException(
+                status_code=400,
+                detail=f"Report must be a plain-text file. Allowed extensions: {allowed}",
+            )
         report_text = (await text_file.read()).decode("utf-8", errors="ignore")
 
     if not report_text.strip():

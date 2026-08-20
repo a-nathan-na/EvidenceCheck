@@ -55,7 +55,7 @@ Runs detection over the clip and scores it against the report.
 |---|---|---|---|
 | `video` | file | yes | `.mp4`, `.mov`, `.avi`, `.mkv` |
 | `text_description` | string | no | Ignored when `text_file` is supplied |
-| `text_file` | file | no | Takes precedence over `text_description` |
+| `text_file` | file | no | `.txt` or `.md`; takes precedence over `text_description` |
 
 One of `text_description` or `text_file` must be present.
 
@@ -123,7 +123,7 @@ score.
 
 | Status | Cause |
 |---|---|
-| `400` | Unsupported video extension, or no report text supplied |
+| `400` | Unsupported video extension, non-text report file, or no report supplied |
 | `422` | Video could not be opened or decoded |
 
 ```json

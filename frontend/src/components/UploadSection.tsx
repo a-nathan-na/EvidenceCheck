@@ -46,14 +46,14 @@ export const UploadSection = ({
   const handleTextFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      const allowedExtensions = [".txt", ".pdf", ".doc", ".docx", ".md"];
+      // The API reads reports as UTF-8 text, so binary containers are not accepted.
+      const allowedExtensions = [".txt", ".md"];
       const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
 
       if (!allowedExtensions.includes(fileExtension)) {
         toast({
           title: "Invalid file type",
-          description: "Please upload a .txt, .pdf, .doc, .docx, or .md file",
+          description: "Please upload a .txt or .md file",
           variant: "destructive"
         });
         return;
@@ -149,7 +149,7 @@ export const UploadSection = ({
                 <input
                   id="text-file-upload"
                   type="file"
-                  accept=".txt,.pdf,.doc,.docx,.md"
+                  accept=".txt,.md"
                   onChange={handleTextFileChange}
                   className="hidden"
                 />
@@ -170,9 +170,7 @@ export const UploadSection = ({
                       <p className="font-medium text-foreground">
                         Click to upload report or description
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        PDF, DOCX, TXT, DOC, or MD up to 10MB
-                      </p>
+                      <p className="text-sm text-muted-foreground">TXT or MD, up to 10MB</p>
                     </div>
                   )}
                 </label>
@@ -180,7 +178,7 @@ export const UploadSection = ({
 
               {/* Helper text */}
               <p className="text-xs text-muted-foreground px-1">
-                Upload a report or written description (PDF, DOCX, or TXT).
+                Upload the incident report as a plain-text file.
               </p>
 
               {/* Separator */}

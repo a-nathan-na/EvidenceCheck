@@ -131,6 +131,20 @@ def test_text_file_takes_precedence_over_text_description(client, stub_detector)
     assert response.json()["text_claims"]["people"] == 3
 
 
+def test_analyze_rejects_a_binary_report_file(client, stub_detector):
+    """A PDF would UTF-8 decode to noise and silently yield no claims."""
+    stub_detector()
+    response = client.post(
+        "/analyze",
+        files={
+            **video_upload(),
+            "text_file": ("report.pdf", io.BytesIO(b"%PDF-1.7"), "application/pdf"),
+        },
+    )
+    assert response.status_code == 400
+    assert "plain-text" in response.json()["detail"]
+
+
 def test_unreadable_video_returns_422(client, monkeypatch):
     def boom(path):
         raise ValueError("Could not open video file")
