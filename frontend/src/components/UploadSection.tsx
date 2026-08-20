@@ -1,9 +1,13 @@
-import { Upload, Loader2, FileText } from "lucide-react";
+import { Film, FileText, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Rail } from "@/components/Rail";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+const MAX_REPORT_BYTES = 10 * 1024 * 1024;
+const REPORT_EXTENSIONS = [".txt", ".md"];
 
 interface UploadSectionProps {
   videoFile: File | null;
@@ -16,6 +20,98 @@ interface UploadSectionProps {
   isAnalyzing: boolean;
 }
 
+const formatSize = (bytes: number) =>
+  bytes >= 1024 * 1024
+    ? `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+
+interface DropFieldProps {
+  id: string;
+  accept: string;
+  icon: typeof Film;
+  prompt: string;
+  hint: string;
+  file: File | null;
+  onSelect: (file: File) => void;
+  onClear: () => void;
+  disabled?: boolean;
+}
+
+/**
+ * Empty state shows the action and the accepted formats; the action label never
+ * truncates, so the hint drops to its own line when both will not fit. Once a
+ * file is chosen the field switches to solid border, name, size, and a clear
+ * control.
+ */
+const DropField = ({
+  id,
+  accept,
+  icon: Icon,
+  prompt,
+  hint,
+  file,
+  onSelect,
+  onClear,
+  disabled
+}: DropFieldProps) => {
+  return (
+    <div
+      className={cn(
+        "group flex items-center gap-3 rounded-lg border px-4 py-3.5 transition-colors",
+        file
+          ? "border-solid border-border-strong bg-surface"
+          : "border-dashed border-border-strong",
+        disabled
+          ? "cursor-not-allowed opacity-50"
+          : !file && "hover:border-accent/50 hover:bg-surface"
+      )}
+      data-selected={file ? "true" : "false"}
+    >
+      <input
+        id={id}
+        type="file"
+        accept={accept}
+        disabled={disabled}
+        className="sr-only"
+        onChange={(event) => {
+          const selected = event.target.files?.[0];
+          if (selected) onSelect(selected);
+          event.target.value = "";
+        }}
+      />
+      <Icon
+        className="h-4 w-4 shrink-0 text-muted-foreground group-data-[selected=true]:text-accent"
+        aria-hidden
+      />
+
+      {file ? (
+        <>
+          <span className="min-w-0 flex-1 truncate text-sm text-foreground">{file.name}</span>
+          <span className="tabular shrink-0 font-mono text-xs text-muted-foreground">
+            {formatSize(file.size)}
+          </span>
+          <button
+            type="button"
+            onClick={onClear}
+            className="-mr-1 shrink-0 rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground"
+            aria-label={`Remove ${file.name}`}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </>
+      ) : (
+        <label
+          htmlFor={id}
+          className="flex min-w-0 flex-1 cursor-pointer flex-col items-start gap-0.5 sm:flex-row sm:items-baseline sm:gap-2"
+        >
+          <span className="shrink-0 text-sm text-foreground">{prompt}</span>
+          <span className="text-xs text-muted-foreground">{hint}</span>
+        </label>
+      )}
+    </div>
+  );
+};
+
 export const UploadSection = ({
   videoFile,
   setVideoFile,
@@ -27,212 +123,104 @@ export const UploadSection = ({
   isAnalyzing
 }: UploadSectionProps) => {
   const { toast } = useToast();
+  const ready = Boolean(videoFile) && (Boolean(textFile) || textDescription.trim().length > 0);
 
-  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 100 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please upload a video under 100MB",
-          variant: "destructive"
-        });
-        return;
-      }
-      setVideoFile(file);
-    }
-  };
-
-  const handleTextFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // The API reads reports as UTF-8 text, so binary containers are not accepted.
-      const allowedExtensions = [".txt", ".md"];
-      const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
-
-      if (!allowedExtensions.includes(fileExtension)) {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload a .txt or .md file",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please upload a text file under 10MB",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      setTextFile(file);
-    }
-  };
-
-  const handleAnalyzeClick = () => {
-    if (!videoFile) {
+  const handleVideo = (file: File) => {
+    if (file.size > MAX_VIDEO_BYTES) {
       toast({
-        title: "Video required",
-        description: "Please upload a video file",
+        title: "Video too large",
+        description: "The API accepts clips up to 100 MB. Trim the clip and try again.",
         variant: "destructive"
       });
       return;
     }
-    if (!textFile && !textDescription.trim()) {
+    setVideoFile(file);
+  };
+
+  const handleReport = (file: File) => {
+    const extension = `.${file.name.split(".").pop()?.toLowerCase() ?? ""}`;
+    if (!REPORT_EXTENSIONS.includes(extension)) {
       toast({
-        title: "Description required",
-        description: "Please upload a text file or enter a description in the text area",
+        title: "Unsupported report format",
+        description: "Reports are read as plain text. Upload a .txt or .md file.",
         variant: "destructive"
       });
       return;
     }
-    onAnalyze();
+    if (file.size > MAX_REPORT_BYTES) {
+      toast({
+        title: "Report too large",
+        description: "The API accepts reports up to 10 MB.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setTextFile(file);
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl">Upload Evidence</CardTitle>
-          <CardDescription>
-            Upload your video clip (10-30 seconds) and provide a text description of what should be
-            in the video.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="video-upload" className="text-base font-semibold">
-              Video File
-            </Label>
-            <div className="flex flex-col gap-3">
-              <div className="relative">
-                <input
-                  id="video-upload"
-                  type="file"
-                  accept="video/*"
-                  onChange={handleVideoFileChange}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="video-upload"
-                  className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 p-12 transition-colors hover:border-accent hover:bg-accent/5"
-                >
-                  <Upload className="mb-4 h-12 w-12 text-muted-foreground" />
-                  {videoFile ? (
-                    <div className="text-center">
-                      <p className="font-medium text-foreground">{videoFile.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {(videoFile.size / (1024 * 1024)).toFixed(2)} MB
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <p className="font-medium text-foreground">Click to upload video</p>
-                      <p className="text-sm text-muted-foreground">MP4, MOV, AVI up to 100MB</p>
-                    </div>
-                  )}
-                </label>
-              </div>
-            </div>
-          </div>
+    <section aria-label="Evidence">
+      <Rail label="Video">
+        <DropField
+          id="video-upload"
+          accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska"
+          icon={Film}
+          prompt="Choose a clip"
+          hint="MP4, MOV, AVI, MKV · up to 100 MB"
+          file={videoFile}
+          onSelect={handleVideo}
+          onClear={() => setVideoFile(null)}
+          disabled={isAnalyzing}
+        />
+      </Rail>
 
-          <div className="space-y-2">
-            <Label htmlFor="text-file-upload" className="text-base font-semibold">
-              Text Description
-            </Label>
-            <div className="space-y-3">
-              {/* Primary: File Upload */}
-              <div className="relative">
-                <input
-                  id="text-file-upload"
-                  type="file"
-                  accept=".txt,.md"
-                  onChange={handleTextFileChange}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="text-file-upload"
-                  className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 p-8 transition-colors hover:border-accent hover:bg-accent/5"
-                >
-                  <FileText className="mb-3 h-10 w-10 text-muted-foreground" />
-                  {textFile ? (
-                    <div className="text-center">
-                      <p className="font-medium text-foreground">{textFile.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {(textFile.size / 1024).toFixed(2)} KB
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <p className="font-medium text-foreground">
-                        Click to upload report or description
-                      </p>
-                      <p className="text-sm text-muted-foreground">TXT or MD, up to 10MB</p>
-                    </div>
-                  )}
-                </label>
-              </div>
+      <Rail label="Report">
+        <div className="space-y-3">
+          <DropField
+            id="report-upload"
+            accept=".txt,.md"
+            icon={FileText}
+            prompt="Choose a report"
+            hint="TXT or MD · up to 10 MB"
+            file={textFile}
+            onSelect={handleReport}
+            onClear={() => setTextFile(null)}
+            disabled={isAnalyzing}
+          />
 
-              {/* Helper text */}
-              <p className="text-xs text-muted-foreground px-1">
-                Upload the incident report as a plain-text file.
-              </p>
+          <Textarea
+            id="report-text"
+            aria-label="Report text"
+            placeholder="Or type the claims to check — for example: two people and one car, no weapons."
+            value={textDescription}
+            onChange={(event) => setTextDescription(event.target.value)}
+            disabled={Boolean(textFile) || isAnalyzing}
+            className="min-h-20 resize-y"
+          />
 
-              {/* Separator */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">Or</span>
-                </div>
-              </div>
+          {textFile && (
+            <p className="text-xs text-muted-foreground">
+              The uploaded file takes precedence. Remove it to type a report instead.
+            </p>
+          )}
+        </div>
+      </Rail>
 
-              {/* Fallback: Text Area */}
-              <div className="space-y-2">
-                <Label
-                  htmlFor="text-description"
-                  className="text-sm font-medium text-muted-foreground"
-                >
-                  Manual Entry (Optional)
-                </Label>
-                <Textarea
-                  id="text-description"
-                  placeholder="Enter claims to verify (e.g., 'Three people, two cars, no weapons visible')"
-                  value={textDescription}
-                  onChange={(e) => setTextDescription(e.target.value)}
-                  className="min-h-24 resize-none"
-                  disabled={!!textFile}
-                />
-                <p className="text-xs text-muted-foreground px-1">
-                  {textFile
-                    ? "A file is uploaded, so manual entry is disabled. Remove the file to use manual entry."
-                    : "If a file is uploaded, EvidenceCheck will use it as the incident description; otherwise it will use the text above."}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <Button
-            onClick={handleAnalyzeClick}
-            disabled={isAnalyzing || !videoFile || (!textFile && !textDescription.trim())}
-            size="lg"
-            className="w-full bg-gradient-accent font-semibold shadow-glow transition-all hover:scale-[1.02]"
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Analyzing Evidence...
-              </>
-            ) : (
-              "Analyze Evidence"
-            )}
+      <Rail label="Run">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Button onClick={onAnalyze} disabled={!ready || isAnalyzing} className="min-w-36">
+            {isAnalyzing && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />}
+            {isAnalyzing ? "Analyzing" : "Analyze"}
           </Button>
-        </CardContent>
-      </Card>
-    </div>
+          <p className="text-xs text-muted-foreground" role="status">
+            {isAnalyzing
+              ? "Sampling frames and running detection. A 30-second clip takes about 30 seconds."
+              : ready
+                ? "Ready."
+                : "A clip and a report are both required."}
+          </p>
+        </div>
+      </Rail>
+    </section>
   );
 };
