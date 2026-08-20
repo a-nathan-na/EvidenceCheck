@@ -105,7 +105,7 @@ A claim the report never made is skipped, not counted as agreement.
 ## Tests
 
 ```bash
-cd backend && pytest          # 51 tests, ~0.5s
+cd backend && pytest          # 52 tests, ~1s
 cd frontend && npm test       # 6 tests
 ```
 
