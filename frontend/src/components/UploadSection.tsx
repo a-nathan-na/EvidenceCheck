@@ -49,7 +49,7 @@ export const UploadSection = ({
       // Validate file type
       const allowedExtensions = [".txt", ".pdf", ".doc", ".docx", ".md"];
       const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
-      
+
       if (!allowedExtensions.includes(fileExtension)) {
         toast({
           title: "Invalid file type",
@@ -58,7 +58,7 @@ export const UploadSection = ({
         });
         return;
       }
-      
+
       if (file.size > 10 * 1024 * 1024) {
         toast({
           title: "File too large",
@@ -67,7 +67,7 @@ export const UploadSection = ({
         });
         return;
       }
-      
+
       setTextFile(file);
     }
   };
@@ -98,7 +98,8 @@ export const UploadSection = ({
         <CardHeader>
           <CardTitle className="text-2xl">Upload Evidence</CardTitle>
           <CardDescription>
-            Upload your video clip (10-30 seconds) and provide a text description of what should be in the video.
+            Upload your video clip (10-30 seconds) and provide a text description of what should be
+            in the video.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -166,18 +167,22 @@ export const UploadSection = ({
                     </div>
                   ) : (
                     <div className="text-center">
-                      <p className="font-medium text-foreground">Click to upload report or description</p>
-                      <p className="text-sm text-muted-foreground">PDF, DOCX, TXT, DOC, or MD up to 10MB</p>
+                      <p className="font-medium text-foreground">
+                        Click to upload report or description
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        PDF, DOCX, TXT, DOC, or MD up to 10MB
+                      </p>
                     </div>
                   )}
                 </label>
               </div>
-              
+
               {/* Helper text */}
               <p className="text-xs text-muted-foreground px-1">
                 Upload a report or written description (PDF, DOCX, or TXT).
               </p>
-              
+
               {/* Separator */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -187,10 +192,13 @@ export const UploadSection = ({
                   <span className="bg-card px-2 text-muted-foreground">Or</span>
                 </div>
               </div>
-              
+
               {/* Fallback: Text Area */}
               <div className="space-y-2">
-                <Label htmlFor="text-description" className="text-sm font-medium text-muted-foreground">
+                <Label
+                  htmlFor="text-description"
+                  className="text-sm font-medium text-muted-foreground"
+                >
                   Manual Entry (Optional)
                 </Label>
                 <Textarea
@@ -202,7 +210,7 @@ export const UploadSection = ({
                   disabled={!!textFile}
                 />
                 <p className="text-xs text-muted-foreground px-1">
-                  {textFile 
+                  {textFile
                     ? "A file is uploaded, so manual entry is disabled. Remove the file to use manual entry."
                     : "If a file is uploaded, EvidenceCheck will use it as the incident description; otherwise it will use the text above."}
                 </p>
