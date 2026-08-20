@@ -1,3 +1,4 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -6,17 +7,38 @@ __pycache__/
 env/
 venv/
 ENV/
-.venv
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Secrets and local configuration — never commit these
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Model weights, downloaded on first run
+*.pt
+*.pth
+runs/
+
+# Video clips are inputs, not source. Screenshots and the demo GIF under docs/
+# are tracked deliberately, so image formats are not blanket-ignored.
 *.mp4
 *.mov
 *.avi
-*.jpg
-*.png
-*.jpeg
-*.pth
-*.pt
-.DS_Store
-*.log
-runs/
-*.tmp
+*.mkv
+output/
+test_videos/
 
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
