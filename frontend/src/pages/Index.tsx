@@ -4,6 +4,7 @@ import { ResultsSection } from "@/components/ResultsSection";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { Shield, Video, FileText, CheckCircle2, Linkedin } from "lucide-react";
 
 export interface AnalysisResult {
@@ -29,6 +30,7 @@ const Index = () => {
   const [textDescription, setTextDescription] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
+  const { toast } = useToast();
 
   const handleAnalyze = async () => {
     // Validation: must have video and either text file or text description
@@ -89,34 +91,15 @@ const Index = () => {
       }
     } catch (error) {
       console.error("Analysis error:", error);
-      // For now, use mock results on error (you can replace with proper error handling)
-      const mockResults: AnalysisResult = {
-        overallScore: 85,
-        claims: [
-          {
-            type: "people",
-            claimed: "3 people",
-            detected: "3 people",
-            consistent: true,
-            confidence: 95
-          },
-          {
-            type: "vehicles",
-            claimed: "2 cars",
-            detected: "2 cars",
-            consistent: true,
-            confidence: 92
-          },
-          {
-            type: "weapons",
-            claimed: "No weapons",
-            detected: "No weapons",
-            consistent: true,
-            confidence: 88
-          }
-        ]
-      };
-      setResults(mockResults);
+      setResults(null);
+      toast({
+        title: "Analysis failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Could not reach the analysis service.",
+        variant: "destructive"
+      });
     } finally {
       setIsAnalyzing(false);
     }
