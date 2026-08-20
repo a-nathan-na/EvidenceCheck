@@ -1,15 +1,10 @@
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { Button } from "@/components/ui/button";
 
-const queryClient = new QueryClient();
-
-// Smooth scroll helper function
 const scrollTo = (id: string) => {
   const el = document.getElementById(id);
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -60,24 +55,21 @@ const Header = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <div className="min-h-screen">
-          <Header />
-          <div className="pt-16">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
+  <TooltipProvider>
+    <Toaster />
+    <BrowserRouter>
+      <div className="min-h-screen">
+        <Header />
+        <div className="pt-16">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            {/* Custom routes go above the catch-all. */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </div>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+      </div>
+    </BrowserRouter>
+  </TooltipProvider>
 );
 
 export default App;
